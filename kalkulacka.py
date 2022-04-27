@@ -1,92 +1,69 @@
-#!/usr/bin/env python3
-# Soubor:  kalkulacka.py
-# Datum:   28.03.2022 08:31
-# Autor:   Marek Nožka, nozka <@t> spseol <d.t> cz
-############################################################################
-import math
+import tkinter as tk
+from tkinter import Listbox, END
+from os.path import basename, splitext
 
-zasobnik = []
+class Application(tk.Tk):
+    name = basename(splitext(basename(__file__.capitalize()))[0])
+    name = "Kalkulacka"
+    
+    def __init__(self):
+        super().__init__(className=self.name)
+        self.title(self.name)        
+        self.bind("<Return>", self.vepsani)
 
+        self.var_field = tk.Variable()
 
-def operace(token):
-    if token.upper() == "Q":
-        exit()
-    if token.upper() == "PI":
-        zasobnik.append(math.pi)
-    if token == "+":
-        b = zasobnik.pop()
-        a = zasobnik.pop()
-        zasobnik.append(a + b)
-    if token == "-":
-        b = zasobnik.pop()
-        a = zasobnik.pop()
-        zasobnik.append(a - b)
-    if token == "*":
-        b = zasobnik.pop()
-        a = zasobnik.pop()
-        zasobnik.append(a * b)
-    if token == "**":
-        b = zasobnik.pop()
-        a = zasobnik.pop()
-        zasobnik.append(a ** b)
-    if token == "sin":
-        a = zasobnik.pop()
-        zasobnik.append(math.sin(a))
-    if token == "cos":
-        a = zasobnik.pop()
-        zasobnik.append(math.cos(a))
+        self.entry_field = tk.Entry(self, textvariable = self.var_field)
+        self.entry_field.grid(row = 0)
+        
+        self.listbox = Listbox(self)
+        self.listbox.grid(row = 1)
 
+        self.btn_quit = tk.Button(self, text = "Zavřít", command = self.quit)
+        self.btn_quit.grid()
 
-dva_operandy = {}
-dva_operandy["+"] = lambda a, b: a + b
-dva_operandy["-"] = lambda a, b: a - b
-dva_operandy["*"] = lambda a, b: a * b
-dva_operandy["/"] = lambda a, b: a / b
-dva_operandy["//"] = lambda a, b: a // b
-dva_operandy["**"] = lambda a, b: a ** b
+        self.cisla = []
+        self.priklad = {}
+        self.priklad["+"] = lambda a, b: a + b
+        self.priklad["-"] = lambda a, b: a - b
+        self.priklad["*"] = lambda a, b: a * b
+        self.priklad["/"] = lambda a, b: a / b
+        self.priklad["//"] = lambda a, b: a // b
+        self.priklad["**"] = lambda a, b: a ** b
 
-jeden_operand = {}
-jeden_operand["sin"] = math.sin
-jeden_operand["cos"] = math.cos
-jeden_operand["tg"] = math.tan
-jeden_operand["tan"] = math.tan
+    def vepsani(self, event = None):
+        raw = self.var_field.get().split()
+        if len(raw) == 0:
+            pocet = 1
 
-
-def operace(token):
-    if token.upper() == "Q":
-        exit()
-    if token.upper() == "PI":
-        zasobnik.append(math.pi)
-    if token.upper() == "SW":
-        b = zasobnik.pop()
-        a = zasobnik.pop()
-        zasobnik.append(b)
-        zasobnik.append(a)
-    if token in dva_operandy.keys():
-        if len(zasobnik) >= 2:
-            b = zasobnik.pop()
-            a = zasobnik.pop()
-            zasobnik.append(dva_operandy[token](a, b))
         else:
-            print("Nemám dost operandů!!!")
-    if token in jeden_operand.keys():
-        if len(zasobnik) >= 1:
-            a = zasobnik.pop()
-            zasobnik.append(jeden_operand[token](a))
-        else:
-            print("Nemám dost operandů!!!")
+            pocet = len(raw)
 
+        for i in range(0, pocet):
+                item = raw[i]
+                
+                try:
+                    self.cisla.append(float(item))
+                except:
+                    pass
 
-def zpracuj(radek):
-    tokeny = radek.split()
-    for token in tokeny:
-        try:
-            zasobnik.append(float(token))
-        except ValueError:
-            operace(token)
+                if item in self.priklad.keys():
+                    if len(self.cisla) >= 2:
+                        b = self.cisla.pop()
+                        a = self.cisla.pop()
+                        self.cisla.append(self.priklad[item](a, b))
+                        self.listbox.insert(END, self.priklad[item](a, b))
+                
+                self.vysledek()
 
+    def vysledek(self):
+        self.var_field.set("")
+        self.listbox.delete(0, END)
+        for item in self.cisla:
+            self.listbox.insert(END, item)
 
-# čtu vstup
-while True:
-    radek = input(zasobnik.__repr__() + ">>> ")
-    zpracuj(radek)
+    def quit(self, event = None):
+        super().quit()
+
+app = Application()
+app.mainloop()
